@@ -16,7 +16,7 @@
 #define clock3 10
 
 int countStandByClick = 0;
-bool isStandBy = false;
+bool isStandBy = true;
 bool isLocked = false;
 
 int shift1[3] = {data1, latch1, clock1};
@@ -102,16 +102,33 @@ void setLedOuput(int *pinData, int pinDataSize, char inputString)
     }
 }
 
+void standByBtnAction()
+{
+    countStandByClick++;
+    delay(500);
+
+    if (countStandByClick == 2)
+    {
+        isStandBy = false;
+    }
+    else
+    {
+        isStandBy = true;
+        setLedOuput(shift1, n, 'A');
+        setLedOuput(shift2, n, 'B');
+        setLedOuput(shift3, n, 'C');
+    }
+}
+
 void setup()
 {
     Serial.begin(9600);
-    // INPUT
+
     pinMode(pbt1, INPUT_PULLUP);
     pinMode(pbt2, INPUT_PULLUP);
     pinMode(pbt3, INPUT_PULLUP);
     pinMode(standByBtnPin, INPUT_PULLUP);
 
-    // OUTPUT
     pinMode(data1, OUTPUT);
     pinMode(latch1, OUTPUT);
     pinMode(clock1, OUTPUT);
@@ -133,26 +150,9 @@ void loop()
 {
     if (digitalRead(standByBtnPin) == LOW)
     {
-        if (countStandByClick < 3)
-        {
-            countStandByClick++;
-            delay(500);
-        }
-
-        if (countStandByClick == 2)
-        {
-            isStandBy = true;
-        }
-        else
-        {
-            setLedOuput(shift1, n, 'A');
-            setLedOuput(shift2, n, 'B');
-            setLedOuput(shift3, n, 'C');
-            isStandBy = false;
-        }
+        standByBtnAction();
     }
-
-    if (isStandBy)
+    if (!isStandBy)
     {
         setLedOuput(shift1, n, 'A');
         setLedOuput(shift2, n, 0);
@@ -168,5 +168,8 @@ void loop()
         setLedOuput(shift2, n, 0);
         setLedOuput(shift3, n, 3);
         delay(2000);
+
+        countStandByClick = 0;
+        standByBtnAction();
     }
 }
