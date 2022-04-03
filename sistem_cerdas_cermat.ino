@@ -5,11 +5,15 @@
 #define incScorePin 9
 #define decScorePin 10
 
-#define interupt A0
+#define interupt 11
 
 #define data 2
 #define latch 3
 #define clock 4
+
+volatile boolean ledAisOn = false;
+volatile boolean ledBisOn = false;
+volatile boolean ledCisOn = false;
 
 int countStandByClick = 0;
 bool isStandBy = true;
@@ -69,17 +73,44 @@ void participantAction()
     {
         if (digitalRead(pbt1) == LOW)
         {
-            displayOutput(10, 13, 13);
+            if (ledAisOn)
+            {
+                ledAisOn = false;
+                displayOutput(13, 13, 13);
+            }
+            else
+            {
+                ledAisOn = true;
+                displayOutput(10, 13, 13);
+            }
             isLocked = true;
         }
         else if (digitalRead(pbt2) == LOW)
         {
-            displayOutput(13, 11, 13);
+            if (ledBisOn)
+            {
+                ledBisOn = false;
+                displayOutput(13, 13, 13);
+            }
+            else
+            {
+                ledBisOn = true;
+                displayOutput(13, 11, 13);
+            }
             isLocked = true;
         }
         else if (digitalRead(pbt3) == LOW)
         {
-            displayOutput(13, 13, 12);
+            if (ledCisOn)
+            {
+                ledCisOn = false;
+                displayOutput(13, 13, 13);
+            }
+            else
+            {
+                ledCisOn = true;
+                displayOutput(13, 13, 12);
+            }
             isLocked = true;
         }
     }
@@ -103,39 +134,39 @@ void scoreBoardAction()
     }
 }
 
-// void scoreMechanism()
-// {
-//     if (digitalRead(incScorePin) == LOW)
-//     {
-//         if (currentTeamStand == 'A')
-//         {
-//             scoreTeamA++;
-//         }
-//         else if (currentTeamStand == 'B')
-//         {
-//             scoreTeamB++;
-//         }
-//         else if (currentTeamStand == 'C')
-//         {
-//             scoreTeamC++;
-//         }
-//     }
-//     else if (digitalRead(decScorePin) == LOW)
-//     {
-//         if (currentTeamStand == 'A')
-//         {
-//             scoreTeamA--;
-//         }
-//         else if (currentTeamStand == 'B')
-//         {
-//             scoreTeamB--;
-//         }
-//         else if (currentTeamStand == 'C')
-//         {
-//             scoreTeamC--;
-//         }
-//     }
-// }
+void scoreMechanism()
+{
+    if (digitalRead(incScorePin) == LOW)
+    {
+        if (currentTeamStand == 'A')
+        {
+            scoreTeamA++;
+        }
+        else if (currentTeamStand == 'B')
+        {
+            scoreTeamB++;
+        }
+        else if (currentTeamStand == 'C')
+        {
+            scoreTeamC++;
+        }
+    }
+    else if (digitalRead(decScorePin) == LOW)
+    {
+        if (currentTeamStand == 'A')
+        {
+            scoreTeamA--;
+        }
+        else if (currentTeamStand == 'B')
+        {
+            scoreTeamB--;
+        }
+        else if (currentTeamStand == 'C')
+        {
+            scoreTeamC--;
+        }
+    }
+}
 
 void setup()
 {
@@ -145,6 +176,7 @@ void setup()
     pinMode(pbt2, INPUT_PULLUP);
     pinMode(pbt3, INPUT_PULLUP);
     pinMode(standByBtnPin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(interupt), participantAction, RISING);
 
     pinMode(data, OUTPUT);
     pinMode(latch, OUTPUT);
@@ -161,5 +193,5 @@ void loop()
     }
     scoreBoardAction();
     participantAction();
-    // scoreMechanism();
+    scoreMechanism();
 }
