@@ -1,105 +1,50 @@
-#define pbt1 13
-#define pbt2 12
-#define pbt3 11
-#define standByBtnPin A0
+#define pbt1 5
+#define pbt2 6
+#define pbt3 7
+#define standByBtnPin 8
+#define incScorePin 9
+#define decScorePin 10
 
-#define data1 2
-#define latch1 3
-#define clock1 4
+#define interupt A0
 
-#define data2 5
-#define latch2 6
-#define clock2 7
-
-#define data3 8
-#define latch3 9
-#define clock3 10
+#define data 2
+#define latch 3
+#define clock 4
 
 int countStandByClick = 0;
 bool isStandBy = true;
 bool isLocked = false;
 
-int shift1[3] = {data1, latch1, clock1};
-int shift2[3] = {data2, latch2, clock2};
-int shift3[3] = {data3, latch3, clock3};
+char currentTeamStand = 'A';
 
-int n = sizeof(shift1) / sizeof(shift1[0]);
+int scoreTeamA = 0;
+int scoreTeamB = 0;
+int scoreTeamC = 0;
 
-void setLedOuput(int *pinData, int pinDataSize, char inputString)
+int digit[14]{
+    0b11111100, // 0
+    0b01100000, // 1
+    0b11011010, // 2
+    0b11110010, // 3
+    0b01100110, // 4
+    0b10110110, // 5
+    0b10111110, // 6
+    0b11100000, // 7
+    0b11111110, // 8
+    0b11110110, // 9
+    0b11111010, // a
+    0b00111110, // b
+    0b10011100, // c
+    0b00000000, // e
+};
+
+void displayOutput(int digit1, int digit2, int digit3)
 {
-    switch (inputString)
-    {
-    case 'E':
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b00000000);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 'A':
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11111010);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 'B':
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b00111110);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 'C':
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b10011100);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 0:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11111100);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 1:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b01100000);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 2:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11011010);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 3:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11110010);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 4:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11110010);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 5:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b10110110);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 6:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b10111110);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 7:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11100000);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 8:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11111110);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    case 9:
-        digitalWrite(pinData[1], LOW);
-        shiftOut(pinData[0], pinData[2], LSBFIRST, 0b11110110);
-        digitalWrite(pinData[1], HIGH);
-        break;
-    }
+    digitalWrite(latch, LOW);
+    shiftOut(data, clock, LSBFIRST, digit[digit3]);
+    shiftOut(data, clock, LSBFIRST, digit[digit2]);
+    shiftOut(data, clock, LSBFIRST, digit[digit1]);
+    digitalWrite(latch, HIGH);
 }
 
 void standByBtnAction()
@@ -114,11 +59,83 @@ void standByBtnAction()
     else
     {
         isStandBy = true;
-        setLedOuput(shift1, n, 'A');
-        setLedOuput(shift2, n, 'B');
-        setLedOuput(shift3, n, 'C');
+        displayOutput(10, 11, 12);
     }
 }
+
+void participantAction()
+{
+    if (countStandByClick == 1 && isLocked == false)
+    {
+        if (digitalRead(pbt1) == LOW)
+        {
+            displayOutput(10, 13, 13);
+            isLocked = true;
+        }
+        else if (digitalRead(pbt2) == LOW)
+        {
+            displayOutput(13, 11, 13);
+            isLocked = true;
+        }
+        else if (digitalRead(pbt3) == LOW)
+        {
+            displayOutput(13, 13, 12);
+            isLocked = true;
+        }
+    }
+}
+
+void scoreBoardAction()
+{
+    if (isStandBy == false)
+    {
+        displayOutput(10, scoreTeamA, scoreTeamA);
+        delay(2000);
+
+        displayOutput(11, scoreTeamB, scoreTeamB);
+        delay(2000);
+
+        displayOutput(12, scoreTeamC, scoreTeamC);
+        delay(2000);
+
+        countStandByClick = 0;
+        standByBtnAction();
+    }
+}
+
+// void scoreMechanism()
+// {
+//     if (digitalRead(incScorePin) == LOW)
+//     {
+//         if (currentTeamStand == 'A')
+//         {
+//             scoreTeamA++;
+//         }
+//         else if (currentTeamStand == 'B')
+//         {
+//             scoreTeamB++;
+//         }
+//         else if (currentTeamStand == 'C')
+//         {
+//             scoreTeamC++;
+//         }
+//     }
+//     else if (digitalRead(decScorePin) == LOW)
+//     {
+//         if (currentTeamStand == 'A')
+//         {
+//             scoreTeamA--;
+//         }
+//         else if (currentTeamStand == 'B')
+//         {
+//             scoreTeamB--;
+//         }
+//         else if (currentTeamStand == 'C')
+//         {
+//             scoreTeamC--;
+//         }
+//     }
+// }
 
 void setup()
 {
@@ -129,21 +146,11 @@ void setup()
     pinMode(pbt3, INPUT_PULLUP);
     pinMode(standByBtnPin, INPUT_PULLUP);
 
-    pinMode(data1, OUTPUT);
-    pinMode(latch1, OUTPUT);
-    pinMode(clock1, OUTPUT);
+    pinMode(data, OUTPUT);
+    pinMode(latch, OUTPUT);
+    pinMode(clock, OUTPUT);
 
-    pinMode(data2, OUTPUT);
-    pinMode(latch2, OUTPUT);
-    pinMode(clock2, OUTPUT);
-
-    pinMode(data3, OUTPUT);
-    pinMode(latch3, OUTPUT);
-    pinMode(clock3, OUTPUT);
-
-    setLedOuput(shift1, n, 'E');
-    setLedOuput(shift2, n, 'E');
-    setLedOuput(shift3, n, 'E');
+    displayOutput(13, 13, 13);
 }
 
 void loop()
@@ -152,24 +159,7 @@ void loop()
     {
         standByBtnAction();
     }
-    if (!isStandBy)
-    {
-        setLedOuput(shift1, n, 'A');
-        setLedOuput(shift2, n, 0);
-        setLedOuput(shift3, n, 1);
-        delay(2000);
-
-        setLedOuput(shift1, n, 'B');
-        setLedOuput(shift2, n, 0);
-        setLedOuput(shift3, n, 2);
-        delay(2000);
-
-        setLedOuput(shift1, n, 'C');
-        setLedOuput(shift2, n, 0);
-        setLedOuput(shift3, n, 3);
-        delay(2000);
-
-        countStandByClick = 0;
-        standByBtnAction();
-    }
+    scoreBoardAction();
+    participantAction();
+    // scoreMechanism();
 }
