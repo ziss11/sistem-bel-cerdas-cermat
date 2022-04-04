@@ -16,11 +16,19 @@ volatile boolean ledBisOn = false;
 volatile boolean ledCisOn = false;
 
 int countStandByClick = 0;
+int numOfWrongAns = 0;
 bool isStandBy = true;
 bool isLocked = false;
 bool isAnswered = false;
+bool isAllTeamAnswered = false;
+bool isCanAnswer[3] = {true, true, true};
 
-char currentTeamStand = 'A';
+char currentTeamStand;
+char *answeredTeam = "";
+
+char team1 = 'A';
+char team2 = 'B';
+char team3 = 'C';
 
 int scoreTeamA = 0;
 int scoreTeamB = 0;
@@ -56,6 +64,9 @@ void displayOutput(int digit1, int digit2, int digit3)
 
 void standByBtnAction()
 {
+
+    int digit[3] = {10, 11, 12};
+
     countStandByClick++;
     delay(500);
 
@@ -65,9 +76,30 @@ void standByBtnAction()
     }
     else
     {
+        isAllTeamAnswered = false;
         isStandBy = true;
-        displayOutput(10, 11, 12);
+        if (isAllTeamAnswered == false)
+        {
+            if (strchr(answeredTeam, team1) != NULL)
+                digit[0] = 13;
+
+            if (strchr(answeredTeam, team2) != NULL)
+                digit[1] = 13;
+
+            if (strchr(answeredTeam, team3) != NULL)
+                digit[2] = 13;
+        }
+        else
+        {
+            digit[0] = 10;
+            digit[1] = 11;
+            digit[2] = 12;
+            Serial.println("All team have answered");
+        }
+
+        displayOutput(digit[0], digit[1], digit[2]);
     }
+
     isLocked = false;
     ledAisOn = false;
     ledBisOn = false;
@@ -78,9 +110,9 @@ void participantAction()
 {
     if (countStandByClick == 1 && isLocked == false)
     {
-        if (digitalRead(pbt1) == LOW)
+        if (digitalRead(pbt1) == LOW && isCanAnswer[0])
         {
-            currentTeamStand = 'A';
+            currentTeamStand = team1;
             if (ledAisOn)
             {
                 ledAisOn = false;
@@ -94,9 +126,9 @@ void participantAction()
             isLocked = true;
             isAnswered = true;
         }
-        else if (digitalRead(pbt2) == LOW)
+        else if (digitalRead(pbt2) == LOW && isCanAnswer[1])
         {
-            currentTeamStand = 'B';
+            currentTeamStand = team2;
             if (ledBisOn)
             {
                 ledBisOn = false;
@@ -110,9 +142,9 @@ void participantAction()
             isLocked = true;
             isAnswered = true;
         }
-        else if (digitalRead(pbt3) == LOW)
+        else if (digitalRead(pbt3) == LOW && isCanAnswer[2])
         {
-            currentTeamStand = 'C';
+            currentTeamStand = team3;
             if (ledCisOn)
             {
                 ledCisOn = false;
@@ -153,43 +185,76 @@ void scoreMechanism()
     {
         if (digitalRead(incScorePin) == LOW)
         {
-            if (currentTeamStand == 'A')
+            if (currentTeamStand == team1)
             {
                 scoreTeamA += 2;
             }
-            else if (currentTeamStand == 'B')
+            else if (currentTeamStand == team2)
             {
                 scoreTeamB += 2;
             }
-            else if (currentTeamStand == 'C')
+            else if (currentTeamStand == team3)
             {
                 scoreTeamC += 2;
             }
             displayOutput(15, 15, 15);
+            delay(1000);
+            standByBtnAction();
             isAnswered = false;
         }
         else if (digitalRead(decScorePin) == LOW)
         {
-            if (currentTeamStand == 'A')
+            if (currentTeamStand == team1)
             {
+                numOfWrongAns++;
+                isCanAnswer[0] = false;
                 scoreTeamA--;
+                strncat(answeredTeam, &team1, 1);
                 scoreTeamA = checkScore(scoreTeamA);
             }
-            else if (currentTeamStand == 'B')
+            else if (currentTeamStand == team2)
             {
+                numOfWrongAns++;
+                isCanAnswer[1] = false;
                 scoreTeamB--;
+                strncat(answeredTeam, &team2, 1);
                 scoreTeamB = checkScore(scoreTeamB);
             }
-            else if (currentTeamStand == 'C')
+            else if (currentTeamStand == team3)
             {
+                numOfWrongAns++;
+                isCanAnswer[2] = false;
                 scoreTeamC--;
+                strncat(answeredTeam, &team3, 1);
                 scoreTeamC = checkScore(scoreTeamC);
             }
             displayOutput(14, 14, 14);
+            delay(1000);
+            checkTeamAnswered();
+            standByBtnAction();
             isAnswered = false;
             isLocked = false;
             participantAction();
         }
+    }
+    Serial.print("Team have answered: ");
+    Serial.println(answeredTeam);
+}
+
+void checkTeamAnswered()
+{
+    if (numOfWrongAns == 3)
+    {
+        numOfWrongAns = 0;
+        isAllTeamAnswered = true;
+        memset(answeredTeam, 0, 3);
+
+        for (int i = 0; i < 3; i++)
+        {
+            isCanAnswer[i] = true;
+        }
+        Serial.println("No more team can answered");
+        Serial.println(strchr(answeredTeam, team1));
     }
 }
 
@@ -210,8 +275,8 @@ void setup()
     pinMode(pbt2, INPUT_PULLUP);
     pinMode(pbt3, INPUT_PULLUP);
     pinMode(standByBtnPin, INPUT_PULLUP);
-    pinMode(interupt, INPUT);
-    attachInterrupt(digitalPinToInterrupt(interupt), participantAction, LOW);
+    // pinMode(interupt, INPUT);
+    // attachInterrupt(digitalPinToInterrupt(interupt), participantAction, FALLING);
     pinMode(incScorePin, INPUT_PULLUP);
     pinMode(decScorePin, INPUT_PULLUP);
     pinMode(data, OUTPUT);
@@ -228,6 +293,6 @@ void loop()
         standByBtnAction();
     }
     scoreBoardAction();
-    // participantAction();
+    participantAction();
     scoreMechanism();
 }
