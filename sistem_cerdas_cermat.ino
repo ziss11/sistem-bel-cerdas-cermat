@@ -123,6 +123,7 @@ void participantAction()
                 ledAisOn = true;
                 displayOutput(10, 13, 13);
             }
+            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
@@ -139,6 +140,7 @@ void participantAction()
                 ledBisOn = true;
                 displayOutput(13, 11, 13);
             }
+            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
@@ -155,6 +157,7 @@ void participantAction()
                 ledCisOn = true;
                 displayOutput(13, 13, 12);
             }
+            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
