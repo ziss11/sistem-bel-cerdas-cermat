@@ -96,7 +96,7 @@ void standByBtnAction()
             digit[2] = 12;
             Serial.println("All team have answered");
         }
-
+        participantAction();
         displayOutput(digit[0], digit[1], digit[2]);
     }
 
@@ -123,7 +123,6 @@ void participantAction()
                 ledAisOn = true;
                 displayOutput(10, 13, 13);
             }
-            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
@@ -140,7 +139,6 @@ void participantAction()
                 ledBisOn = true;
                 displayOutput(13, 11, 13);
             }
-            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
@@ -157,7 +155,6 @@ void participantAction()
                 ledCisOn = true;
                 displayOutput(13, 13, 12);
             }
-            memset(answeredTeam, 0, 3);
             isLocked = true;
             isAnswered = true;
         }
@@ -200,9 +197,13 @@ void scoreMechanism()
             {
                 scoreTeamC += 2;
             }
+            memset(answeredTeam, 0, 3);
+            countStandByClick = 1;
+            numOfWrongAns = 0;
             displayOutput(15, 15, 15);
             delay(1000);
             standByBtnAction();
+            isLocked = false;
             isAnswered = false;
         }
         else if (digitalRead(decScorePin) == LOW)
@@ -234,12 +235,13 @@ void scoreMechanism()
             displayOutput(14, 14, 14);
             delay(1000);
             checkTeamAnswered();
+            countStandByClick = 1;
             standByBtnAction();
             isAnswered = false;
             isLocked = false;
-            participantAction();
         }
     }
+    participantAction();
     Serial.print("Team have answered: ");
     Serial.println(answeredTeam);
 }
@@ -278,8 +280,10 @@ void setup()
     pinMode(pbt2, INPUT_PULLUP);
     pinMode(pbt3, INPUT_PULLUP);
     pinMode(standByBtnPin, INPUT_PULLUP);
-    // pinMode(interupt, INPUT);
+    // pinMode(interupt, INPUT_PULLUP);
+
     // attachInterrupt(digitalPinToInterrupt(interupt), participantAction, FALLING);
+
     pinMode(incScorePin, INPUT_PULLUP);
     pinMode(decScorePin, INPUT_PULLUP);
     pinMode(data, OUTPUT);
